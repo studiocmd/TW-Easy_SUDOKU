@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中華民國入門數獨遊戲</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft JhengHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #000095 0%, #0038A8 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #0038A8;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+        
+        .menu {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .level-btn {
+            padding: 20px;
+            font-size: 20px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+            background: #E8E8E8;
+            color: #000000;
+        }
+        
+        .level-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            background: #D0D0D0;
+        }
+        
+        .level-1 { background: #F0F0F0; }
+        .level-2 { background: #E8E8E8; }
+        .level-3 { background: #E0E0E0; }
+        .level-4 { background: #D8D8D8; }
+        .level-5 { background: #D0D0D0; }
+        
+        .game-container {
+            display: none;
+        }
+        
+        .game-container.active {
+            display: block;
+        }
+        
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .difficulty-badge {
+            padding: 8px 16px;
+            border-radius: 20px;
+            color: #000000;
+            font-weight: bold;
+            background: #E8E8E8;
+        }
+        
+        .sudoku-grid {
+            display: grid;
+            grid-template-columns: repeat(9, 1fr);
+            gap: 0;
+            border: 3px solid #333;
+            width: fit-content;
+            margin: 0 auto 20px;
+            background: #333;
+        }
+        
+        .cell {
+            width: 45px;
+            height: 45px;
+            border: 1px solid #999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            font-weight: bold;
+            background: white;
+            cursor: pointer;
+        }
+        
+        .cell input {
+            width: 100%;
+            height: 100%;
+            border: none;
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            background: transparent;
+            cursor: pointer;
+        }
+        
+        .cell input:focus {
+            outline: 2px solid #0038A8;
+            background: #E3F2FD;
+        }
+        
+        .cell.fixed {
+            background: #f5f5f5;
+            color: #333;
+        }
+        
+        .cell.fixed input {
+            cursor: default;
+        }
+        
+        .cell.error {
+            background: #ffebee !important;
+            color: #c62828;
+        }
+        
+        .cell:nth-child(3n) {
+            border-right: 3px solid #333;
+        }
+        
+        .cell:nth-child(n+19):nth-child(-n+27),
+        .cell:nth-child(n+46):nth-child(-n+54) {
+            border-bottom: 3px solid #333;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .btn-restart {
+            background: linear-gradient(135deg, #FE0000 0%, #D50000 100%);
+        }
+        
+        .btn-menu {
+            background: linear-gradient(135deg, #000095 0%, #0038A8 100%);
+        }
+        
+        .btn-new {
+            background: linear-gradient(135deg, #FFFFFF 0%, #F0F0F0 100%);
+            color: #000000;
+            border: 2px solid #0038A8;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .success-message {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #FE0000 0%, #D50000 100%);
+            color: white;
+            border-radius: 10px;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        
+        .success-message.show {
+            display: block;
+            animation: slideIn 0.5s;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+            
+            .cell {
+                width: 35px;
+                height: 35px;
+            }
+            
+            .cell input {
+                font-size: 16px;
+            }
+            
+            h1 {
+                font-size: 22px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🇹🇼 中華民國入門數獨遊戲</h1>
+        
+        <div id="menu" class="menu">
+            <button class="level-btn level-1" onclick="startGame(1)">第一級 - 入門</button>
+            <button class="level-btn level-2" onclick="startGame(2)">第二級 - 簡單</button>
+            <button class="level-btn level-3" onclick="startGame(3)">第三級 - 中等</button>
+            <button class="level-btn level-4" onclick="startGame(4)">第四級 - 困難</button>
+            <button class="level-btn level-5" onclick="startGame(5)">第五級 - 專家</button>
+        </div>
+        
+        <div id="game" class="game-container">
+            <div class="game-header">
+                <div class="difficulty-badge" id="difficultyBadge"></div>
+            </div>
+            
+            <div id="sudokuGrid" class="sudoku-grid"></div>
+            
+            <div class="success-message" id="successMessage">
+                🎉 恭喜完成！
+            </div>
+            
+            <div class="controls">
+                <button class="btn btn-restart" onclick="restartGame()">🔄 重來</button>
+                <button class="btn btn-new" onclick="newGame()">✨ 新題目</button>
+                <button class="btn btn-menu" onclick="backToMenu()">📋 選單</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentLevel = 1;
+        let currentPuzzle = [];
+        let solution = [];
+        let initialPuzzle = [];
+        
+        const difficultySettings = {
+            1: { name: '入門', clues: 45, class: 'level-1' },
+            2: { name: '簡單', clues: 40, class: 'level-2' },
+            3: { name: '中等', clues: 35, class: 'level-3' },
+            4: { name: '困難', clues: 30, class: 'level-4' },
+            5: { name: '專家', clues: 25, class: 'level-5' }
+        };
+        
+        function startGame(level) {
+            currentLevel = level;
+            document.getElementById('menu').style.display = 'none';
+            document.getElementById('game').classList.add('active');
+            
+            const badge = document.getElementById('difficultyBadge');
+            const settings = difficultySettings[level];
+            badge.textContent = `第${level}級 - ${settings.name}`;
+            badge.className = 'difficulty-badge ' + settings.class;
+            
+            generatePuzzle();
+            renderGrid();
+        }
+        
+        function backToMenu() {
+            document.getElementById('menu').style.display = 'flex';
+            document.getElementById('game').classList.remove('active');
+            document.getElementById('successMessage').classList.remove('show');
+        }
+        
+        function generateSolution() {
+            const grid = Array(9).fill().map(() => Array(9).fill(0));
+            
+            function isValid(grid, row, col, num) {
+                for (let x = 0; x < 9; x++) {
+                    if (grid[row][x] === num || grid[x][col] === num) return false;
+                }
+                
+                const startRow = Math.floor(row / 3) * 3;
+                const startCol = Math.floor(col / 3) * 3;
+                for (let i = 0; i < 3; i++) {
+                    for (let j = 0; j < 3; j++) {
+                        if (grid[startRow + i][startCol + j] === num) return false;
+                    }
+                }
+                return true;
+            }
+            
+            function solve(grid) {
+                for (let row = 0; row < 9; row++) {
+                    for (let col = 0; col < 9; col++) {
+                        if (grid[row][col] === 0) {
+                            const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9].sort(() => Math.random() - 0.5);
+                            for (let num of numbers) {
+                                if (isValid(grid, row, col, num)) {
+                                    grid[row][col] = num;
+                                    if (solve(grid)) return true;
+                                    grid[row][col] = 0;
+                                }
+                            }
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            }
+            
+            solve(grid);
+            return grid;
+        }
+        
+        function generatePuzzle() {
+            solution = generateSolution();
+            const puzzle = solution.map(row => [...row]);
+            
+            const clues = difficultySettings[currentLevel].clues;
+            const cellsToRemove = 81 - clues;
+            
+            let removed = 0;
+            while (removed < cellsToRemove) {
+                const row = Math.floor(Math.random() * 9);
+                const col = Math.floor(Math.random() * 9);
+                if (puzzle[row][col] !== 0) {
+                    puzzle[row][col] = 0;
+                    removed++;
+                }
+            }
+            
+            currentPuzzle = puzzle.map(row => [...row]);
+            initialPuzzle = puzzle.map(row => [...row]);
+        }
+        
+        function renderGrid() {
+            const grid = document.getElementById('sudokuGrid');
+            grid.innerHTML = '';
+            
+            for (let row = 0; row < 9; row++) {
+                for (let col = 0; col < 9; col++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.maxLength = 1;
+                    
+                    if (initialPuzzle[row][col] !== 0) {
+                        input.value = initialPuzzle[row][col];
+                        input.disabled = true;
+                        cell.classList.add('fixed');
+                    } else if (currentPuzzle[row][col] !== 0) {
+                        input.value = currentPuzzle[row][col];
+                    }
+                    
+                    input.addEventListener('input', (e) => handleInput(e, row, col));
+                    cell.appendChild(input);
+                    grid.appendChild(cell);
+                }
+            }
+        }
+        
+        function handleInput(e, row, col) {
+            const value = e.target.value;
+            
+            if (value === '') {
+                currentPuzzle[row][col] = 0;
+                e.target.parentElement.classList.remove('error');
+                return;
+            }
+            
+            if (!/^[1-9]$/.test(value)) {
+                e.target.value = '';
+                return;
+            }
+            
+            const num = parseInt(value);
+            currentPuzzle[row][col] = num;
+            
+            if (num !== solution[row][col]) {
+                e.target.parentElement.classList.add('error');
+            } else {
+                e.target.parentElement.classList.remove('error');
+                checkCompletion();
+            }
+        }
+        
+        function checkCompletion() {
+            for (let row = 0; row < 9; row++) {
+                for (let col = 0; col < 9; col++) {
+                    if (currentPuzzle[row][col] !== solution[row][col]) {
+                        return false;
+                    }
+                }
+            }
+            
+            document.getElementById('successMessage').classList.add('show');
+            return true;
+        }
+        
+        function restartGame() {
+            currentPuzzle = initialPuzzle.map(row => [...row]);
+            document.getElementById('successMessage').classList.remove('show');
+            renderGrid();
+        }
+        
+        function newGame() {
+            document.getElementById('successMessage').classList.remove('show');
+            generatePuzzle();
+            renderGrid();
+        }
+    </script>
+</body>
+</html>
