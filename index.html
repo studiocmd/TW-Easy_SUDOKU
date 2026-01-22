@@ -158,6 +158,16 @@
             transform: scale(0.95);
         }
         
+        .num-btn.completed {
+            background: #424242;
+            color: white;
+            border-color: #424242;
+        }
+        
+        .num-btn.completed:hover {
+            background: #616161;
+        }
+        
         .cell:nth-child(3n) {
             border-right: 3px solid #333;
         }
@@ -344,6 +354,7 @@
             
             generatePuzzle();
             renderGrid();
+            updateNumberButtons();
         }
         
         function backToMenu() {
@@ -477,11 +488,38 @@
             }
             
             renderGrid();
+            updateNumberButtons();
             
             // 重新選擇該格子
             selectCell(row, col);
             
             checkCompletion();
+        }
+        
+        function updateNumberButtons() {
+            // 計算每個數字在棋盤上出現的次數
+            const counts = Array(10).fill(0);
+            
+            for (let row = 0; row < 9; row++) {
+                for (let col = 0; col < 9; col++) {
+                    const num = currentPuzzle[row][col];
+                    if (num !== 0) {
+                        counts[num]++;
+                    }
+                }
+            }
+            
+            // 更新按鈕樣式
+            for (let num = 1; num <= 9; num++) {
+                const buttons = document.querySelectorAll('.num-btn');
+                const button = buttons[num - 1]; // 按鈕索引從0開始
+                
+                if (counts[num] >= 9) {
+                    button.classList.add('completed');
+                } else {
+                    button.classList.remove('completed');
+                }
+            }
         }
         
         function undoMove() {
@@ -495,6 +533,7 @@
             
             document.getElementById('successMessage').classList.remove('show');
             renderGrid();
+            updateNumberButtons();
             
             // 選擇被復原的格子
             selectCell(lastMove.row, lastMove.col);
@@ -519,6 +558,7 @@
             selectedCell = null;
             document.getElementById('successMessage').classList.remove('show');
             renderGrid();
+            updateNumberButtons();
         }
         
         function newGame() {
@@ -527,7 +567,8 @@
             document.getElementById('successMessage').classList.remove('show');
             generatePuzzle();
             renderGrid();
+            updateNumberButtons();
         }
     </script>
 </body>
-</html>
+</html>w
